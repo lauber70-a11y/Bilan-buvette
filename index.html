@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Buvette - V28 (Fix Bouton Ajouter)</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        :root { 
+            --primary: #3498db; --success: #2ecc71; --danger: #e74c3c; 
+            --dark: #2c3e50; --bg: #f5f6fa; --card-bg: #ffffff;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            margin: 0; padding: 15px; background-color: var(--bg); color: var(--dark);
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .container { max-width: 600px; margin: 0 auto; }
+        
+        header { 
+            text-align: center; margin-bottom: 15px; background: var(--dark); color: white; 
+            padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .control-group { background: rgba(255, 255, 255, 0.15); padding: 8px; border-radius: 8px; text-align: left; }
+        .control-group label { font-size: 11px; display: block; margin-bottom: 4px; opacity: 0.9; text-transform: uppercase; font-weight: bold; }
+        .control-group select, .control-group input { 
+            width: 100%; padding: 6px; border-radius: 4px; border: none; font-weight: bold; 
+            background: white; color: var(--dark); font-size: 14px;
+        }
+
+        .financial-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .summary-card { background: var(--card-bg); padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .summary-card.total { grid-column: span 2; background: var(--dark); color: white; }
+        .summary-card h3 { margin: 0; color: #7f8c8d; font-size: 11px; text-transform: uppercase; }
+        .summary-card p { margin: 5px 0 0 0; font-size: 18px; font-weight: bold; }
+        .summary-card.total p { font-size: 22px; color: var(--success); }
+        
+        .section-title { border-left: 4px solid var(--primary); padding-left: 8px; margin: 20px 0 10px 0; font-size: 16px; font-weight: bold; }
+        
+        .product-card {
+            background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #eaeaea;
+        }
+        
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .card-title { font-weight: bold; font-size: 16px; color: var(--dark); }
+        .price-badge { background: #f1f3f5; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        
+        .card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; color: #7f8c8d; }
+        
+        .stock-control {
+            grid-column: span 2; display: flex; align-items: center; justify-content: space-between;
+            background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px;
+        }
+        .counter-area { display: flex; align-items: center; gap: 15px; }
+        .btn-counter {
+            width: 40px; height: 40px; border-radius: 50%; border: none; font-size: 20px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; color: white;
+        }
+        .btn-minus { background: #95a5a6; }
+        .btn-plus { background: var(--primary); }
+        .stock-value { font-size: 22px; font-weight: bold; color: var(--dark); }
+        
+        .card-actions { display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+        .btn-action { font-size: 11px; padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-transfer { background: #9b59b6; color: white; }
+        .btn-delete { background: #ffebee; color: var(--danger); }
+        
+        .admin-panel { background: white; border-radius: 12px; margin-top: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; }
+        .admin-header {
+            width: 100%; padding: 15px; border: none; background: var(--dark); color: white;
+            font-size: 14px; font-weight: bold; text-align: left; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .admin-content { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; }
+        .admin-panel.active .admin-content { max-height: 500px; padding: 15px; }
+        
+        .form-group { display: flex; flex-direction: column; gap: 10px; }
+        .form-group input, .form-group select { padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; width: 100%; }
+        
+        button.btn-block { width: 100%; padding: 15px; border-radius: 8px; font-size: 15px; font-weight: bold; border: none; cursor: pointer; }
+        .btn-add { background: var(--dark); color: white; }
+        .btn-reset { background: #e67e22; color: white; margin-top: 20px; }
+        
+        .history-panel { background: #fff; padding: 15px; border-radius: 12px; margin-top: 20px; }
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .btn-print { background: #34495e; color: white; padding: 8px 15px; border-radius: 6px; border: none; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .history-list { max-height: 200px; overflow-y: auto; background: #f8f9fa; border: 1px solid #eee; border-radius: 8px; padding: 10px; font-size: 11px; }
+        .history-item { padding: 5px 0; border-bottom: 1px solid #eee; color: #555; white-space: pre-wrap; }
+        
+        #loading { text-align: center; font-size: 16px; color: #7f8c8d; padding: 30px; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
+            z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-card { background: white; width: 90%; max-width: 500px; border-radius: 16px; padding: 20px; }
+        .modal-body { max-height: 300px; overflow-y: auto; font-size: 14px; margin: 15px 0; }
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-modal { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-confirm { background: var(--success); color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Bilan Buvette</h1>
+        <div class="header-controls">
+            <div class="control-group">
+                <label>Point de Vente</label>
+                <select id="pos-choice" onchange="changePOS(this.value)">
+                    <option value="point_1">Point 1</option>
+                    <option value="point_2">Point 2</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Date Manifestation</label>
+                <input type="date" id="event-date">
+            </div>
+        </div>
+    </header>
+
+    <div id="loading">⏳ Chargement...</div>
+
+    <div id="app-content" style="display:none;">
+        <div class="financial-summary">
+            <div class="summary-card"><h3>🍹 Boissons</h3><p id="ca-boissons">0.00 €</p></div>
+            <div class="summary-card"><h3>🍔 Food</h3><p id="ca-nourriture">0.00 €</p></div>
+            <div class="summary-card total"><h3>💰 CA TOTAL ACTUEL</h3><p id="ca-total">0.00 €</p></div>
+        </div>
+
+        <div class="section-title">🍹 Boissons</div>
+        <div id="list-boissons"></div>
+
+        <div class="section-title">🍔 Nourriture</div>
+        <div id="list-nourriture"></div>
+
+        <button class="btn-block btn-reset" onclick="openClotureModal()">🏁 Clôturer le shift</button>
+
+        <div class="admin-panel" id="admin-panel">
+            <button class="admin-header" onclick="toggleForm()">
+                <span>➕ Nouveau Produit</span>
+                <span>▼</span>
+            </button>
+            <div class="admin-content">
+                <div class="form-group">
+                    <input type="text" id="new-name" placeholder="Nom du produit (ex: Coca)">
+                    <input type="number" id="new-stock" placeholder="Stock départ (ex: 20)">
+                    <input type="number" id="new-price" placeholder="Prix de vente (€)" step="0.5">
+                    <input type="number" id="new-ratio" placeholder="Portions par unité (ex: 1)" value="1">
+                    <select id="new-category">
+                        <option value="boissons">Catégorie: Boisson</option>
+                        <option value="nourriture">Catégorie: Nourriture</option>
+                    </select>
+                    <button class="btn-block btn-add" onclick="addItem()">✅ Enregistrer le produit</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="history-panel">
+            <div class="history-header">
+                <h3>📜 Historique</h3>
+                <button class="btn-print" onclick="printHistory()">🖨️ Imprimer Bilan</button>
+            </div>
+            <div class="history-list" id="history-list"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="cloture-modal">
+    <div class="modal-card">
+        <h2 id="modal-title" style="margin:0; font-size:18px;">📊 Bilan de Clôture</h2>
+        <div class="modal-body" id="modal-body"></div>
+        <div class="modal-actions">
+            <button class="btn-modal" onclick="closeClotureModal()">Annuler</button>
+            <button class="btn-modal btn-confirm" onclick="confirmCloture()">Valider</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // -------------------------------------------------------------------------
+    // ⚠️ CONFIGURATION FIREBASE
+    // -------------------------------------------------------------------------
+    const firebaseConfig = {
+       apiKey: "AIzaSyB1YkVkCYeNoDLxyaUgcxhyKMEPzYNteGI",
+       authDomain: "bilan-buvette.firebaseapp.com",
+       projectId: "bilan-buvette",
+       storageBucket: "bilan-buvette.firebasestorage.app",
+       messagingSenderId: "89721562835",
+       appId: "1:89721562835:web:9d6256a024ab90a33bd626"
+    };
+    // -------------------------------------------------------------------------
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let currentPOS = "point_1";
+    let products = [];
+    let history = [];
+    let unsubscribeProducts = null;
+    let unsubscribeHistory = null;
+
+    // Date par défaut
+    const dateInput = document.getElementById('event-date');
+    dateInput.value = new Date().toISOString().split('T')[0];
+
+    function changePOS(newPOS) {
+        currentPOS = newPOS;
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('app-content').style.display = 'none';
+        if (unsubscribeProducts) unsubscribeProducts();
+        if (unsubscribeHistory) unsubscribeHistory();
+        listenToFirebase();
+    }
+
+    function listenToFirebase() {
+        unsubscribeProducts = db.collection("products")
+            .where("pos", "==", currentPOS)
+            .onSnapshot((snapshot) => {
+                products = [];
+                snapshot.forEach((doc) => { products.push({ id: doc.id, ...doc.data() }); });
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
+                renderCards();
+            });
+
+        unsubscribeHistory = db.collection("history")
+            .where("pos", "==", currentPOS)
+            .orderBy("timestamp", "desc")
+            .limit(30) 
+            .onSnapshot((snapshot) => {
+                history = [];
+                snapshot.forEach((doc) => { history.push(doc.data()); });
+                renderHistory();
+            });
+    }
+
+    function renderCards() {
+        const listB = document.getElementById('list-boissons');
+        const listN = document.getElementById('list-nourriture');
+        listB.innerHTML = ''; listN.innerHTML = '';
+        let tB = 0; let tN = 0;
+
+        products.forEach(p => {
+            const soldPortions = (p.initial - p.current) * p.ratio;
+            const ca = soldPortions * p.price;
+            if (p.category === 'boissons') tB += ca; else tN += ca;
+
+            const card = document.createElement('div');
+            card.className = `product-card`;
+            card.innerHTML = `
+                <div class="card-header"><span class="card-title">${p.name}</span><span class="price-badge">${p.price.toFixed(2)} €</span></div>
+                <div class="card-body">
+                    <div>Initial: <b>${p.initial}</b></div>
+                    <div>Vendus: <b>${soldPortions}</b></div>
+                    <div class="stock-control">
+                        <div class="counter-area">
+                            <button class="btn-counter btn-minus" onclick="updateStock('${p.id}', -1)">−</button>
+                            <span class="stock-value">${p.current}</span>
+                            <button class="btn-counter btn-plus" onclick="updateStock('${p.id}', 1)">+</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-action btn-transfer" onclick="transferProduct('${p.id}')">⇄ Transférer</button>
+                    <button class="btn-action btn-delete" onclick="deleteItem('${p.id}', '${p.name}')">🗑️</button>
+                </div>
+            `;
+            if (p.category === 'boissons') listB.appendChild(card); else listN.appendChild(card);
+        });
+
+        document.getElementById('ca-boissons').innerText = `${tB.toFixed(2)} €`;
+        document.getElementById('ca-nourriture').innerText = `${tN.toFixed(2)} €`;
+        document.getElementById('ca-total').innerText = `${(tB + tN).toFixed(2)} €`;
+    }
+
+    function updateStock(id, change) {
+        const p = products.find(x => x.id === id);
+        if (p && p.current + change >= 0) {
+            db.collection("products").doc(id).update({ current: p.current + change });
+            addHistory(`Stock ${p.name} -> ${p.current + change}`);
+        }
+    }
+
+    // --- FIX : AJOUTER UN PRODUIT ---
+    function addItem() {
+        const name = document.getElementById('new-name').value;
+        const stock = parseInt(document.getElementById('new-stock').value);
+        const price = parseFloat(document.getElementById('new-price').value);
+        const ratio = parseInt(document.getElementById('new-ratio').value) || 1;
+        const category = document.getElementById('new-category').value;
+
+        if (!name || isNaN(stock) || isNaN(price)) {
+            alert("Veuillez remplir le nom, le stock et le prix !");
+            return;
+        }
+
+        const newDoc = {
+            name: name,
+            initial: stock,
+            current: stock,
+            price: price,
+            ratio: ratio,
+            category: category,
+            pos: currentPOS,
+            alert: 5 // Par défaut
+        };
+
+        db.collection("products").add(newDoc).then(() => {
+            addHistory(`Créé : ${name}`);
+            // Reset formulaire
+            document.getElementById('new-name').value = '';
+            document.getElementById('new-stock').value = '';
+            document.getElementById('new-price').value = '';
+            toggleForm();
+        }).catch(err => alert("Erreur : " + err));
+    }
+
+    function deleteItem(id, name) {
+        if(confirm(`Supprimer ${name} ?`)) {
+            db.collection("products").doc(id).delete();
+            addHistory(`Supprimé : ${name}`);
+        }
+    }
+
+    // --- FIX : TRANSFERER ---
+    function transferProduct(id) {
+        const p = products.find(x => x.id === id);
+        const target = currentPOS === "point_1" ? "point_2" : "point_1";
+        const qty = parseInt(prompt(`Combien de [${p.name}] envoyer vers le ${target} ?`, "1"));
+
+        if (isNaN(qty) || qty <= 0 || qty > p.current) {
+            alert("Quantité invalide ou insuffisante !");
+            return;
+        }
+
+        // 1. Enlever du point actuel
+        db.collection("products").doc(id).update({ 
+            initial: p.initial - qty, 
+            current: p.current - qty 
+        });
+
+        // 2. Ajouter au point cible
+        db.collection("products").where("pos", "==", target).where("name", "==", p.name).get().then(snap => {
+            if (!snap.empty) {
+                const targetDoc = snap.docs[0];
+                db.collection("products").doc(targetDoc.id).update({
+                    initial: targetDoc.data().initial + qty,
+                    current: targetDoc.data().current + qty
+                });
+            } else {
+                db.collection("products").add({
+                    ...p, pos: target, initial: qty, current: qty
+                });
+            }
+            addHistory(`TRANSFÉRÉ : ${qty} ${p.name} vers ${target}`);
+        });
+    }
+
+    function openClotureModal() {
+        db.collection("products").get().then((snap) => {
+            let html = `<b>Bilan du ${dateInput.value}</b><br><br>`;
+            let totals = {};
+            snap.forEach(doc => {
+                const d = doc.data();
+                totals[d.name] = (totals[d.name] || 0) + d.current;
+            });
+            for (let name in totals) {
+                html += `<div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee;">
+                            <span>${name}</span> <b>${totals[name]} restant(s)</b>
+                         </div>`;
+            }
+            document.getElementById('modal-body').innerHTML = html;
+            document.getElementById('cloture-modal').classList.add('active');
+        });
+    }
+
+    function confirmCloture() {
+        addHistory(`🏁 CLÔTURE DU SHIFT (CA: ${document.getElementById('ca-total').innerText})`);
+        products.forEach(p => db.collection("products").doc(p.id).update({ initial: p.current }));
+        closeClotureModal();
+    }
+
+    function closeClotureModal() { document.getElementById('cloture-modal').classList.remove('active'); }
+    function toggleForm() { document.getElementById('admin-panel').classList.toggle('active'); }
+
+    function addHistory(text) {
+        db.collection("history").add({ 
+            text: `[${dateInput.value}] ${text}`, 
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            pos: currentPOS 
+        });
+    }
+
+    function renderHistory() {
+        const listDiv = document.getElementById('history-list');
+        listDiv.innerHTML = history.map(i => `<div class="history-item">${i.text}</div>`).join('');
+    }
+
+    function printHistory() {
+        db.collection("products").get().then((snap) => {
+            let ca1 = 0, ca2 = 0;
+            snap.forEach(doc => {
+                const d = doc.data();
+                const v = (d.initial - d.current) * d.ratio * d.price;
+                if (d.pos === "point_1") ca1 += v; else ca2 += v;
+            });
+            const win = window.open('', '_blank');
+            win.document.write(`
+                <html><head><title>Bilan</title><style>body{font-family:sans-serif;padding:20px;}</style></head>
+                <body onload="window.print(); window.close();">
+                    <h1>DATE : ${dateInput.value}</h1>
+                    <p>Total P1 : ${ca1.toFixed(2)} €</p>
+                    <p>Total P2 : ${ca2.toFixed(2)} €</p>
+                    <h2>CUMUL : ${(ca1+ca2).toFixed(2)} €</h2>
+                    <hr>
+                    ${document.getElementById('history-list').innerHTML}
+                </body></html>`);
+            win.document.close();
+        });
+    }
+
+    listenToFirebase();
+</script>
+
+</body>
+</html>
