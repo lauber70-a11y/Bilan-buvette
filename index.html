@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Caisse Cloud V8 - Stock Total</title>
+    <title>Caisse Cloud Pro V9 - Final</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -31,18 +31,18 @@
                 </select>
             </div>
             <div class="text-right">
-                <p class="text-[10px] font-black text-slate-400 uppercase italic" id="cloudStatus">Cloud Sync...</p>
+                <p class="text-[10px] font-black text-emerald-500 uppercase italic mb-1" id="cloudStatus">Connexion...</p>
                 <p id="grandTotal" class="text-2xl font-black text-emerald-400">0.00€</p>
             </div>
         </header>
 
         <div class="grid grid-cols-2 gap-3 mb-6">
             <div class="bg-white p-3 rounded-2xl border border-slate-200 text-center">
-                <span class="text-[8px] font-black text-slate-400 uppercase italic">Caisse A</span>
+                <span class="text-[8px] font-black text-slate-400 uppercase italic">Recette A</span>
                 <p id="recetteA" class="text-base font-black text-slate-800">0.00€</p>
             </div>
             <div class="bg-white p-3 rounded-2xl border border-slate-200 text-center">
-                <span class="text-[8px] font-black text-slate-400 uppercase italic">Caisse B</span>
+                <span class="text-[8px] font-black text-slate-400 uppercase italic">Recette B</span>
                 <p id="recetteB" class="text-base font-black text-slate-800">0.00€</p>
             </div>
         </div>
@@ -57,37 +57,42 @@
         <div id="section-restau" class="hidden space-y-4"></div>
 
         <section id="section-config" class="hidden space-y-4">
-            <button onclick="generateReport()" class="w-full bg-blue-600 text-white p-5 rounded-2xl font-black uppercase shadow-lg">📊 Bilan Final Cloud</button>
+            <button onclick="generateReport()" class="w-full bg-blue-600 text-white p-5 rounded-2xl font-black uppercase shadow-lg">📊 Générer le Bilan & Stocks</button>
             <div class="card p-5">
-                <h2 class="text-xs font-black uppercase text-slate-500 mb-4 border-b pb-2">Nouveau Produit</h2>
+                <h2 class="text-xs font-black uppercase text-slate-500 mb-4 border-b pb-2">Ajouter un produit</h2>
                 <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="itemName" placeholder="Nom" class="col-span-2 p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
+                    <select id="itemType" class="col-span-2 p-3 rounded-xl bg-slate-100 font-bold text-sm">
+                        <option value="boisson">Type : Boisson</option>
+                        <option value="restau">Type : Restauration</option>
+                    </select>
+                    <input type="text" id="itemName" placeholder="Nom du produit" class="col-span-2 p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
                     <input type="number" id="itemQty" placeholder="Fûts Initiaux" class="p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
-                    <input type="number" id="itemAlert" placeholder="Alerte" class="p-3 rounded-xl bg-slate-100 font-bold text-sm text-red-500 outline-none">
-                    <input type="number" id="itemRatio" placeholder="Unités/fût" class="p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
-                    <input type="number" id="itemSell" placeholder="Prix Unité" class="p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
-                    <button onclick="addItem()" class="col-span-2 bg-slate-900 text-white p-4 rounded-xl font-black uppercase text-xs">Créer Produit</button>
+                    <input type="number" id="itemAlert" placeholder="Alerte Stock" class="p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
+                    <input type="number" id="itemRatio" placeholder="Verres / fût" class="p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
+                    <input type="number" id="itemSell" placeholder="Prix Verre (€)" class="p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
+                    <button onclick="addItem()" class="col-span-2 bg-slate-900 text-white p-4 rounded-xl font-black uppercase text-xs mt-2">Créer le produit</button>
                 </div>
             </div>
-            <button onclick="resetAll()" class="w-full text-red-500 text-[10px] font-black uppercase p-4">⚠️ Reset Cloud</button>
+            <button onclick="resetAll()" class="w-full text-red-500 text-[10px] font-black uppercase p-4">⚠️ Remise à zéro cloud</button>
         </section>
     </div>
 
     <div id="reportZone" class="print-only p-4 bg-white min-h-screen">
-        <h1 class="text-2xl font-black border-b-4 border-black pb-2 mb-4 text-center italic uppercase">Bilan Final des Stocks</h1>
+        <h1 class="text-2xl font-black border-b-4 border-black pb-2 mb-4 text-center italic uppercase">Rapport Final de l'Évènement</h1>
+        <p id="printDate" class="text-center text-[10px] font-bold mb-6 italic"></p>
         
         <div id="printStats" class="mb-6"></div>
         
         <div id="printDetails" class="space-y-8"></div>
 
         <section class="mt-10 pt-6 border-t-4 border-double border-black">
-            <h2 class="text-center font-black uppercase text-lg mb-4 italic">📦 Récapitulatif Stocks Totaux (A + B)</h2>
+            <h2 class="text-center font-black uppercase text-lg mb-4 italic">📦 État Global des Stocks (A+B)</h2>
             <table class="w-full text-xs border-collapse">
                 <thead class="bg-slate-200">
                     <tr>
                         <th class="p-2 text-left border border-black">Produit</th>
                         <th class="p-2 border border-black text-center">Vendus (Total)</th>
-                        <th class="p-2 border border-black text-center bg-emerald-100 font-black">Stock Final Total</th>
+                        <th class="p-2 border border-black text-center bg-yellow-100 font-black">Reste en Stock</th>
                     </tr>
                 </thead>
                 <tbody id="reportTotalStock"></tbody>
@@ -95,14 +100,15 @@
         </section>
 
         <div class="no-print mt-10 space-y-3">
-            <button onclick="window.print()" class="w-full bg-emerald-600 text-white p-5 rounded-2xl font-black uppercase shadow-xl">🖨️ Imprimer</button>
-            <button onclick="location.reload()" class="w-full bg-slate-800 text-white p-4 rounded-2xl font-black uppercase text-xs italic">⬅️ Revenir aux Ventes</button>
+            <button onclick="window.print()" class="w-full bg-emerald-600 text-white p-5 rounded-2xl font-black uppercase shadow-xl">🖨️ Imprimer le Rapport</button>
+            <button onclick="location.reload()" class="w-full bg-slate-800 text-white p-4 rounded-2xl font-black uppercase text-xs">⬅️ Retour à la Caisse</button>
         </div>
     </div>
 
     <script>
+        // --- CONFIGURATION FIREBASE ---
         const firebaseConfig = {
-            apiKey: "AIzaSyB1YkVkCYeNoDLxyaUgcxhyKMEPzYNteGI",
+             apiKey: "AIzaSyB1YkVkCYeNoDLxyaUgcxhyKMEPzYNteGI",
   authDomain: "bilan-buvette.firebaseapp.com",
   projectId: "bilan-buvette",
   storageBucket: "bilan-buvette.firebasestorage.app",
@@ -120,7 +126,7 @@
             if (data) {
                 inventory = data.inventory || [];
                 caisse = data.caisse || { A: 0, B: 0 };
-                document.getElementById('cloudStatus').innerText = "● Cloud Synchronisé";
+                document.getElementById('cloudStatus').innerText = "● CLOUD LIVE";
                 render();
             }
         });
@@ -136,27 +142,28 @@
             
             inventory.forEach((item, index) => {
                 const sL = pos === 'A' ? item.qtyA : item.qtyB;
-                const sold = (pos === 'A' ? item.soldA : item.soldB) * item.ratio;
-                if (sL > 0 || sold > 0) {
+                const soldU = (pos === 'A' ? item.soldA : item.soldB) * item.ratio;
+                
+                if (sL > 0 || soldU > 0) {
                     const itemDiv = document.createElement('div');
-                    itemDiv.className = `card p-5 ${sL <= item.alert ? 'alert-blink' : ''}`;
+                    itemDiv.className = `card p-5 ${sL <= (item.alert || 0) ? 'alert-blink' : ''}`;
                     itemDiv.innerHTML = `
                         <button onclick="deleteItem(${index})" class="btn-delete no-print">×</button>
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-black text-slate-900 uppercase text-lg">${item.name}</h3>
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="font-black text-slate-900 uppercase text-lg leading-tight flex-1">${item.name}</h3>
                             <div class="text-right">
-                               <span class="block text-2xl font-black text-blue-600">${sold}</span>
-                               <span class="text-[8px] font-black text-blue-300 uppercase">Unités P${pos}</span>
+                               <span class="block text-3xl font-black text-blue-600 leading-none">${soldU}</span>
+                               <span class="text-[9px] font-black text-blue-300 uppercase">Verres Vendus</span>
                             </div>
                         </div>
-                        <div class="bg-slate-50 p-3 rounded-2xl text-center border mb-3">
-                            <p class="text-[8px] font-black text-slate-400 uppercase">Fûts restants (${pos})</p>
-                            <p class="text-2xl font-black">${sL}</p>
+                        <div class="bg-slate-50 p-4 rounded-2xl text-center border mb-4">
+                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Fûts restants sur Poste ${pos}</p>
+                            <p class="text-3xl font-black text-slate-800">${sL}</p>
                         </div>
                         <div class="grid grid-cols-3 gap-2">
-                            <button onclick="adjustStock(${index})" class="bg-white border text-slate-400 py-3 rounded-xl font-black text-[9px]">INV.</button>
-                            <button onclick="handleTransfer(${index})" class="bg-slate-900 text-white py-3 rounded-xl font-black text-[8px]">VERS ${target}</button>
-                            <button onclick="consume(${index})" class="bg-red-500 text-white py-3 rounded-xl font-black text-xs">VENDRE</button>
+                            <button onclick="adjustStock(${index})" class="bg-white border text-slate-400 py-4 rounded-2xl font-black text-[9px] uppercase">Inv.</button>
+                            <button onclick="handleTransfer(${index})" class="bg-slate-900 text-white py-4 rounded-2xl font-black text-[8px] uppercase">Envoi ${target}</button>
+                            <button onclick="consume(${index})" class="bg-red-500 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-lg">VENDRE 1</button>
                         </div>
                     `;
                     (item.type === 'boisson' ? listB : listR).appendChild(itemDiv);
@@ -177,50 +184,80 @@
             }
         }
 
+        function adjustStock(i) {
+            const pos = document.getElementById('posID').value;
+            const item = inventory[i];
+            const current = pos === 'A' ? item.qtyA : item.qtyB;
+            const n = prompt(`INVENTAIRE PHYSIQUE POSTE ${pos}\nCombien de fûts de "${item.name}" reste-t-il ?`, current);
+            
+            if (n !== null && !isNaN(parseInt(n))) {
+                const nouveau = parseInt(n);
+                if (nouveau < current) {
+                    const diff = current - nouveau;
+                    if (confirm(`Vendre ${diff} fût(s) manquant(s) et encaisser ${(diff * item.ratio * item.sell).toFixed(2)}€ ?`)) {
+                        caisse[pos] += (diff * item.ratio * item.sell);
+                        if (pos === 'A') item.soldA += diff; else item.soldB += diff;
+                    }
+                }
+                if (pos === 'A') item.qtyA = nouveau; else item.qtyB = nouveau;
+                saveData();
+            }
+        }
+
+        function handleTransfer(i) {
+            const pos = document.getElementById('posID').value;
+            const target = pos === 'A' ? 'B' : 'A';
+            const q = prompt(`Combien de fûts envoyer vers le Poste ${target} ?`, "1");
+            if (q > 0) {
+                if (pos === 'A' && inventory[i].qtyA >= q) { inventory[i].qtyA -= parseInt(q); inventory[i].qtyB += parseInt(q); }
+                else if (pos === 'B' && inventory[i].qtyB >= q) { inventory[i].qtyB -= parseInt(q); inventory[i].qtyA += parseInt(q); }
+                else { alert("Stock insuffisant !"); }
+                saveData();
+            }
+        }
+
         function generateReport() {
             document.querySelector('.no-print').style.display = 'none';
             document.getElementById('reportZone').classList.remove('print-only');
+            document.getElementById('printDate').innerText = "Date : " + new Date().toLocaleString();
             
             const details = document.getElementById('printDetails');
             const totalStockBody = document.getElementById('reportTotalStock');
-            details.innerHTML = '';
-            totalStockBody.innerHTML = '';
+            details.innerHTML = ''; totalStockBody.innerHTML = '';
             
             ['A', 'B'].forEach(p => {
-                let html = `<div class="mb-4"><h2 class="bg-slate-900 text-white p-2 text-sm font-black uppercase">Poste ${p}</h2><table class="w-full text-xs border-collapse"><thead><tr class="bg-slate-100"><th class="p-2 text-left border">Article</th><th class="p-2 border">Vendus</th><th class="p-2 border">Recette</th><th class="p-2 border">Stock Poste</th></tr></thead><tbody>`;
+                let html = `<div class="mb-4"><h2 class="bg-black text-white p-2 text-sm font-black uppercase italic">POSTE ${p}</h2><table class="w-full text-xs border-collapse"><thead><tr class="bg-slate-100 border-b border-black"><th class="p-2 text-left">Article</th><th class="p-2">Fûts Vendus</th><th class="p-2">CA</th><th class="p-2">Stock Poste</th></tr></thead><tbody>`;
                 inventory.forEach(item => {
                     const s = p === 'A' ? item.soldA : item.soldB;
                     const q = p === 'A' ? item.qtyA : item.qtyB;
-                    if(s > 0 || q > 0) html += `<tr><td class="p-2 border uppercase font-bold">${item.name}</td><td class="p-2 border text-center font-black">${s}</td><td class="p-2 border text-right">${(s * item.ratio * item.sell).toFixed(2)}€</td><td class="p-2 border text-center">${q}</td></tr>`;
+                    if(s > 0 || q > 0) html += `<tr class="border-b">
+                        <td class="p-2 uppercase font-bold">${item.name}</td>
+                        <td class="p-2 text-center font-black text-blue-600">${s}</td>
+                        <td class="p-2 text-right">${(s * item.ratio * item.sell).toFixed(2)}€</td>
+                        <td class="p-2 text-center italic text-slate-500">${q}</td>
+                    </tr>`;
                 });
-                html += `</tbody></table></div>`;
+                html += `</tbody></table><div class="text-right font-black p-2 italic">RECETTE POSTE ${p} : ${caisse[p].toFixed(2)}€</div></div>`;
                 details.innerHTML += html;
             });
 
-            // LOGIQUE STOCK TOTAL
             inventory.forEach(item => {
-                const totalVendus = (item.soldA || 0) + (item.soldB || 0);
-                const totalRestant = (item.qtyA || 0) + (item.qtyB || 0);
-                totalStockBody.innerHTML += `
-                    <tr class="border-b border-black">
-                        <td class="p-2 font-black uppercase text-sm">${item.name}</td>
-                        <td class="p-2 text-center font-bold text-blue-600">${totalVendus} fûts</td>
-                        <td class="p-2 text-center font-black text-lg bg-emerald-50">${totalRestant} fûts</td>
-                    </tr>
-                `;
+                const totalV = (item.soldA || 0) + (item.soldB || 0);
+                const totalR = (item.qtyA || 0) + (item.qtyB || 0);
+                totalStockBody.innerHTML += `<tr class="border-b border-black"><td class="p-2 font-black uppercase">${item.name}</td><td class="p-2 text-center font-bold">${totalV} fûts</td><td class="p-2 text-center font-black bg-yellow-50 text-lg">${totalR} fûts</td></tr>`;
             });
 
-            document.getElementById('printStats').innerHTML = `<div class="bg-black text-white p-4 rounded-xl text-center"><p class="text-3xl font-black text-emerald-400">${(caisse.A+caisse.B).toFixed(2)}€</p><p class="text-[10px] uppercase">Chiffre d'Affaires Total</p></div>`;
+            document.getElementById('printStats').innerHTML = `<div class="bg-black text-white p-4 rounded-xl text-center"><p class="text-3xl font-black text-emerald-400">${(caisse.A+caisse.B).toFixed(2)}€</p><p class="text-[10px] uppercase font-black tracking-widest">Recette Globale Évènement</p></div>`;
         }
 
         function addItem() {
-            const p = document.getElementById('posID').value;
+            const pos = document.getElementById('posID').value;
             const name = document.getElementById('itemName').value;
+            const qty = parseInt(document.getElementById('itemQty').value) || 0;
             if(name) {
                 inventory.push({
-                    name, type: "boisson",
-                    qtyA: p === 'A' ? parseInt(document.getElementById('itemQty').value) : 0,
-                    qtyB: p === 'B' ? parseInt(document.getElementById('itemQty').value) : 0,
+                    name, type: document.getElementById('itemType').value,
+                    qtyA: pos === 'A' ? qty : 0, qtyB: pos === 'B' ? qty : 0,
                     ratio: parseInt(document.getElementById('itemRatio').value) || 1,
                     sell: parseFloat(document.getElementById('itemSell').value) || 0,
                     alert: parseInt(document.getElementById('itemAlert').value) || 0,
@@ -228,26 +265,7 @@
                 });
                 saveData();
                 document.getElementById('itemName').value = '';
-            }
-        }
-
-        function handleTransfer(i) {
-            const pos = document.getElementById('posID').value;
-            const q = prompt(`Nb à transférer ?`);
-            if (q > 0) {
-                if (pos === 'A' && inventory[i].qtyA >= q) { inventory[i].qtyA -= parseInt(q); inventory[i].qtyB += parseInt(q); }
-                else if (pos === 'B' && inventory[i].qtyB >= q) { inventory[i].qtyB -= parseInt(q); inventory[i].qtyA += parseInt(q); }
-                saveData();
-            }
-        }
-
-        function adjustStock(i) {
-            const pos = document.getElementById('posID').value;
-            const current = pos === 'A' ? inventory[i].qtyA : inventory[i].qtyB;
-            const n = prompt(`Nouveau stock physique ?`, current);
-            if (n !== null) {
-                if (pos === 'A') inventory[i].qtyA = parseInt(n); else inventory[i].qtyB = parseInt(n);
-                saveData();
+                document.getElementById('itemQty').value = '';
             }
         }
 
@@ -255,10 +273,11 @@
             ['boisson', 'restau', 'config'].forEach(tab => {
                 document.getElementById('section-' + tab).classList.toggle('hidden', tab !== t);
                 document.getElementById('tab-' + tab).classList.toggle('active-tab', tab === t);
+                document.getElementById('tab-' + tab).classList.toggle('text-slate-400', tab !== t);
             });
         }
-        function deleteItem(i) { if(confirm("Supprimer ?")) { inventory.splice(i, 1); saveData(); } }
-        function resetAll() { if(confirm("RESET TOTAL ?")) { db.ref('data/').remove(); location.reload(); } }
+        function deleteItem(i) { if(confirm("Supprimer l'article ?")) { inventory.splice(i, 1); saveData(); } }
+        function resetAll() { if(confirm("🚨 RESET TOTAL CLOUD ?")) { db.ref('data/').remove(); location.reload(); } }
     </script>
 </body>
 </html>
