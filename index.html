@@ -2,558 +2,251 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Buvette - Bilan Total</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Caisse Pro Cloud - Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     
     <style>
-        :root { 
-            --primary: #3498db; --success: #2ecc71; --danger: #e74c3c; 
-            --dark: #2c3e50; --bg: #f5f6fa; --card-bg: #ffffff;
-        }
-        
-        * { box-sizing: border-box; }
-        
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            margin: 0; padding: 15px; background-color: var(--bg); color: var(--dark);
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        .container { max-width: 600px; margin: 0 auto; }
-        
-        header { 
-            text-align: center; margin-bottom: 15px; background: var(--dark); color: white; 
-            padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        h1 { margin: 0 0 10px 0; font-size: 20px; letter-spacing: 0.5px; }
-        
-        .pos-selector {
-            background: rgba(255, 255, 255, 0.15); padding: 8px; border-radius: 8px; display: block; width: 100%;
-        }
-        .pos-selector label { font-size: 12px; display: block; margin-bottom: 4px; opacity: 0.9; }
-        .pos-selector select { 
-            width: 100%; padding: 8px; border-radius: 6px; border: none; font-weight: bold; 
-            background: white; color: var(--dark); font-size: 16px;
-        }
-
-        .financial-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .summary-card { background: var(--card-bg); padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .summary-card.total { grid-column: span 2; background: var(--dark); color: white; }
-        .summary-card h3 { margin: 0; color: #7f8c8d; font-size: 11px; text-transform: uppercase; }
-        .summary-card.total h3 { color: rgba(255,255,255,0.7); }
-        .summary-card p { margin: 5px 0 0 0; font-size: 18px; font-weight: bold; }
-        .summary-card.total p { font-size: 22px; color: var(--success); }
-        
-        .section-title { border-left: 4px solid var(--primary); padding-left: 8px; margin: 20px 0 10px 0; font-size: 16px; font-weight: bold; }
-        
-        .product-card {
-            background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #eaeaea;
-            transition: all 0.3s ease; position: relative;
-        }
-        
-        @keyframes pulse-danger {
-            0% { background-color: #ffffff; border-color: #eaeaea; }
-            50% { background-color: #ffebee; border-color: var(--danger); }
-            100% { background-color: #ffffff; border-color: #eaeaea; }
-        }
-        
-        .product-card.low-stock {
-            animation: pulse-danger 2.5s infinite ease-in-out;
-            border-left: 5px solid var(--danger);
-        }
-        
-        .product-card.out-of-stock {
-            background-color: #f1f2f6;
-            border: 1px solid #bdc3c7;
-            animation: none;
-        }
-        
-        .out-of-stock-banner {
-            background: var(--dark); color: white; font-weight: bold; text-align: center;
-            padding: 8px; border-radius: 6px; font-size: 14px; text-transform: uppercase;
-            grid-column: span 2; margin-top: 5px; letter-spacing: 1px;
-        }
-        
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .card-title { font-weight: bold; font-size: 16px; color: var(--dark); display: flex; align-items: center; gap: 8px; }
-        .price-badge { background: #f1f3f5; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
-        
-        .card-body { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; color: #7f8c8d; }
-        .card-body b { color: var(--dark); }
-        
-        .stock-control {
-            grid-column: span 2; display: flex; align-items: center; justify-content: space-between;
-            background: rgba(0,0,0,0.03); padding: 10px; border-radius: 8px; margin-top: 5px;
-        }
-        .stock-control span { font-weight: bold; color: var(--dark); font-size: 14px; }
-        .counter-area { display: flex; align-items: center; gap: 15px; }
-        .btn-counter {
-            width: 40px; height: 40px; border-radius: 50%; border: none; font-size: 20px; font-weight: bold;
-            display: flex; align-items: center; justify-content: center; cursor: pointer; color: white;
-        }
-        .btn-minus { background: #95a5a6; }
-        .btn-plus { background: var(--primary); }
-        .stock-value { font-size: 22px; font-weight: bold; color: var(--dark); min-width: 30px; text-align: center; }
-        
-        .card-actions { display: flex; justify-content: space-between; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
-        .btn-action { font-size: 12px; padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
-        .btn-transfer { background: #9b59b6; color: white; }
-        .btn-delete { background: #ffebee; color: var(--danger); }
-        
-        .admin-panel { background: white; border-radius: 12px; margin-top: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; }
-        .admin-header {
-            width: 100%; padding: 15px; border: none; background: var(--dark); color: white;
-            font-size: 15px; font-weight: bold; text-align: left; cursor: pointer;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .admin-header .arrow { transition: transform 0.3s ease; }
-        .admin-panel.active .admin-header .arrow { transform: rotate(90deg); }
-        .admin-content { max-height: 0; overflow: hidden; transition: all 0.3s ease-out; }
-        .admin-panel.active .admin-content { max-height: 450px; padding: 15px; }
-        
-        .form-group { display: flex; flex-direction: column; gap: 10px; }
-        .form-group input, .form-group select { padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; width: 100%; }
-        
-        button.btn-block { width: 100%; padding: 14px; border-radius: 8px; font-size: 15px; font-weight: bold; border: none; cursor: pointer; }
-        .btn-add { background: var(--dark); color: white; }
-        .btn-reset { background: #e67e22; color: white; margin-top: 20px; }
-        
-        /* 📜 ZONE HISTORIQUE */
-        .history-panel { background: #fff; padding: 15px; border-radius: 12px; margin-top: 20px; }
-        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .history-header h3 { margin: 0; font-size: 16px; }
-        .btn-print { background: #34495e; color: white; padding: 6px 12px; border-radius: 6px; border: none; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-        .history-list { max-height: 200px; overflow-y: auto; background: #f8f9fa; border: 1px solid #eee; border-radius: 8px; padding: 10px; font-size: 11px; }
-        .history-item { padding: 4px 0; border-bottom: 1px solid #eee; color: #555; white-space: pre-wrap; }
-        
-        #loading { text-align: center; font-size: 16px; color: #7f8c8d; padding: 30px; }
-
-        /* 🖼️ MODAL DE BILAN MAISON (POUR EVITER LES POPUPS NAVIGATEUR BLOQUÉES) */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
-            z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease;
-        }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-card {
-            background: white; width: 90%; max-width: 500px; border-radius: 16px;
-            padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-        .modal-card h2 { margin-top: 0; font-size: 18px; color: var(--dark); border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .modal-body { max-height: 300px; overflow-y: auto; font-size: 14px; margin: 15px 0; }
-        .modal-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f1f1f1; }
-        .modal-row.total-row { font-weight: bold; color: var(--success); background: #f9f9f9; border-top: 1px solid #ddd; }
-        .modal-actions { display: flex; gap: 10px; }
-        .btn-modal { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-cancel { background: #e0e0e0; color: #333; }
-        .btn-confirm { background: var(--success); color: white; }
+        body { touch-action: manipulation; background-color: #f1f5f9; font-family: 'Inter', sans-serif; }
+        .active-tab { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: 900; }
+        .card { background: white; border-radius: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; position: relative; }
+        .alert-blink { background-color: #fff1f2; border: 2px solid #ef4444; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+        @media print { .no-print { display: none !important; } .print-only { display: block !important; } }
+        .print-only { display: none; }
+        .btn-delete { position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); cursor: pointer; z-index: 10; }
     </style>
 </head>
-<body>
+<body class="p-3 pb-32">
 
-<div class="container">
-    <header>
-        <h1>Bilan Buvette</h1>
-        <div class="pos-selector">
-            <label>📍 Point de vente actuel :</label>
-            <select id="pos-choice" onchange="changePOS(this.value)">
-                <option value="point_1">Point de Vente 1</option>
-                <option value="point_2">Point de Vente 2</option>
-            </select>
+    <div class="no-print">
+        <header class="mb-4 flex items-center justify-between bg-slate-900 p-4 rounded-3xl shadow-2xl border border-slate-700">
+            <div>
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Poste Actif</p>
+                <select id="posID" onchange="render()" class="bg-transparent text-white text-lg font-black outline-none cursor-pointer">
+                    <option value="A" class="text-black">POSTE ALPHA (A)</option>
+                    <option value="B" class="text-black">POSTE BETA (B)</option>
+                </select>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1 italic" id="cloudStatus">Cloud Sync...</p>
+                <p id="grandTotal" class="text-2xl font-black text-emerald-400">0.00€</p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 text-center shadow-sm">
+                <span class="text-[8px] font-black text-slate-400 uppercase">Caisse A</span>
+                <p id="recetteA" class="text-base font-black text-slate-800">0.00€</p>
+            </div>
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 text-center shadow-sm">
+                <span class="text-[8px] font-black text-slate-400 uppercase">Caisse B</span>
+                <p id="recetteB" class="text-base font-black text-slate-800">0.00€</p>
+            </div>
         </div>
-    </header>
 
-    <div id="loading">⏳ Chargement des stocks...</div>
+        <nav class="flex bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6 shadow-sm">
+            <button onclick="switchTab('boisson')" id="tab-boisson" class="flex-1 py-4 text-xs uppercase font-black active-tab">🍺 Boissons</button>
+            <button onclick="switchTab('restau')" id="tab-restau" class="flex-1 py-4 text-xs uppercase font-black text-slate-400">🍔 Restau</button>
+            <button onclick="switchTab('config')" id="tab-config" class="flex-1 py-4 text-xs uppercase font-black text-slate-400">⚙️ Admin</button>
+        </nav>
 
-    <div id="app-content" style="display:none;">
-        <div class="financial-summary">
-            <div class="summary-card"><h3>🍹 Boissons</h3><p id="ca-boissons">0.00 €</p></div>
-            <div class="summary-card"><h3>🍔 Food</h3><p id="ca-nourriture">0.00 €</p></div>
-            <div class="summary-card total"><h3>💰 CA TOTAL DU STAND</h3><p id="ca-total">0.00 €</p></div>
-        </div>
+        <div id="section-boisson" class="space-y-4"></div>
+        <div id="section-restau" class="hidden space-y-4"></div>
 
-        <div class="section-title">🍹 Boissons</div>
-        <div id="list-boissons"></div>
-
-        <div class="section-title">🍔 Nourriture</div>
-        <div id="list-nourriture"></div>
-
-        <button class="btn-block btn-reset" onclick="openClotureModal()">🏁 Clôturer le shift</button>
-
-        <div class="admin-panel" id="admin-panel">
-            <button class="admin-header" onclick="toggleForm()">
-                <span>➕ Ajouter un produit au menu</span>
-                <span class="arrow">▶</span>
-            </button>
-            <div class="admin-content">
-                <div class="form-group">
-                    <input type="text" id="new-name" placeholder="Nom (Ex: Pack Eau 24)">
-                    <input type="number" id="new-stock" placeholder="Stock départ (Packs/Unités)">
-                    <input type="number" id="new-alert" placeholder="Seuil Alerte">
-                    <input type="number" id="new-price" placeholder="Prix de vente d'une unité (€)" step="0.5">
-                    <input type="number" id="new-ratio" placeholder="Contenu par pack/unité (Ex: 24)" value="1">
-                    <select id="new-category">
-                        <option value="boissons">Boisson</option>
-                        <option value="nourriture">Nourriture</option>
+        <section id="section-config" class="hidden space-y-4">
+            <button onclick="generateReport()" class="w-full bg-blue-600 text-white p-5 rounded-2xl font-black uppercase shadow-lg">📊 Bilan Final Détaillé</button>
+            
+            <div class="card p-5">
+                <h2 class="text-xs font-black uppercase text-slate-500 mb-4 border-b pb-2">Nouveau Produit</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <select id="itemType" class="col-span-2 p-3 rounded-xl bg-slate-100 font-bold text-sm">
+                        <option value="boisson">Type : Boisson</option>
+                        <option value="restau">Type : Restauration</option>
                     </select>
-                    <button class="btn-block btn-add" onclick="addItem()">Ajouter au menu</button>
+                    <input type="text" id="itemName" placeholder="Nom du produit" class="col-span-2 p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
+                    <input type="number" id="itemQty" placeholder="Stock Fûts" class="p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
+                    <input type="number" id="itemAlert" placeholder="Alerte Stock" class="p-3 rounded-xl bg-slate-100 font-bold text-sm text-red-500 outline-none">
+                    <input type="number" id="itemRatio" placeholder="Unités / fût" class="p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
+                    <input type="number" id="itemSell" placeholder="Prix Unité (€)" class="p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
+                    <button onclick="addItem()" class="col-span-2 bg-slate-900 text-white p-4 rounded-xl font-black uppercase text-xs mt-2">Créer sur poste actuel</button>
                 </div>
             </div>
-        </div>
-
-        <div class="history-panel">
-            <div class="history-header">
-                <h3>📜 Historique du stand</h3>
-                <button class="btn-print" onclick="printHistory()">🖨️ Imprimer</button>
-            </div>
-            <div class="history-list" id="history-list"></div>
-        </div>
+            <button onclick="resetAll()" class="w-full text-red-500 text-[10px] font-black uppercase p-4 tracking-widest">⚠️ Reset Data Cloud</button>
+        </section>
     </div>
-</div>
 
-<div class="modal-overlay" id="cloture-modal">
-    <div class="modal-card">
-        <h2 id="modal-title">📊 Bilan de Clôture</h2>
-        <div class="modal-body" id="modal-body">
-            </div>
-        <div class="modal-actions">
-            <button class="btn-modal btn-cancel" onclick="closeClotureModal()">Annuler</button>
-            <button class="btn-modal btn-confirm" onclick="confirmCloture()">Valider la clôture</button>
-        </div>
+    <div id="reportZone" class="print-only p-4 bg-white min-h-screen">
+        <h1 class="text-2xl font-black border-b-4 border-black pb-2 mb-6 uppercase text-center italic">BILAN CLOUD FINAL</h1>
+        <div id="printStats" class="mb-4 space-y-2"></div>
+        <div id="printDetails" class="space-y-6"></div>
+        <button onclick="location.reload()" class="no-print w-full bg-slate-200 p-4 mt-10 rounded-2xl font-black uppercase">Retour</button>
     </div>
-</div>
 
-<script>
-    // -------------------------------------------------------------------------
-    // ⚠️ REMPLACEZ CE BLOC PAR VOS COORDONNÉES FIREBASE
-    // -------------------------------------------------------------------------
-    const firebaseConfig = {
-        apiKey: "AIzaSyB1YkVkCYeNoDLxyaUgcxhyKMEPzYNteGI",
-        authDomain: "bilan-buvette.firebaseapp.com",
-        projectId: "bilan-buvette",
-        storageBucket: "bilan-buvette.firebasestorage.app",
-        messagingSenderId: "89721562835",
-        appId: "1:89721562835:web:9d6256a024ab90a33bd626"
-    };
-    // -------------------------------------------------------------------------
+    <script>
+        // --- CONFIGURATION FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyB1YkVkCYeNoDLxyaUgcxhyKMEPzYNteGI",
+            authDomain: "bilan-buvette.firebaseapp.com",
+            projectId: "bilan-buvette",
+            storageBucket: "bilan-buvette.firebasestorage.app",
+            messagingSenderId: "89721562835",
+            appId: "1:89721562835:web:9d6256a024ab90a33bd626"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+        let inventory = [];
+        let caisse = { A: 0, B: 0 };
 
-    let currentPOS = "point_1";
-    let products = [];
-    let history = [];
-    let unsubscribeProducts = null;
-    let unsubscribeHistory = null;
-    let cachedGlobalProducts = []; // Pour stocker les données du point d'à côté
+        // --- SYNCHRONISATION TEMPS RÉEL ---
+        db.ref('data/').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                inventory = data.inventory || [];
+                caisse = data.caisse || { A: 0, B: 0 };
+                document.getElementById('cloudStatus').innerText = "● Cloud Live";
+                document.getElementById('cloudStatus').classList.add('text-emerald-400');
+                render();
+            }
+        });
 
-    function changePOS(newPOS) {
-        currentPOS = newPOS;
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('app-content').style.display = 'none';
-        if (unsubscribeProducts) unsubscribeProducts();
-        if (unsubscribeHistory) unsubscribeHistory();
-        listenToFirebase();
-    }
+        function saveData() {
+            db.ref('data/').set({ inventory, caisse });
+        }
 
-    function listenToFirebase() {
-        unsubscribeProducts = db.collection("products")
-            .where("pos", "==", currentPOS)
-            .onSnapshot((snapshot) => {
-                products = [];
-                snapshot.forEach((doc) => { products.push({ id: doc.id, ...doc.data() }); });
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('app-content').style.display = 'block';
-                renderCards();
-            });
-
-        unsubscribeHistory = db.collection("history")
-            .where("pos", "==", currentPOS)
-            .orderBy("timestamp", "desc")
-            .limit(20) 
-            .onSnapshot((snapshot) => {
-                history = [];
-                snapshot.forEach((doc) => { history.push(doc.data()); });
-                renderHistory();
-            });
-    }
-
-    function renderCards() {
-        const listBoissons = document.getElementById('list-boissons');
-        const listNourriture = document.getElementById('list-nourriture');
-        listBoissons.innerHTML = ''; listNourriture.innerHTML = '';
-
-        let totalBoissons = 0; let totalNourriture = 0;
-
-        products.forEach(product => {
-            const soldUnits = product.initial - product.current;
-            const soldPortions = soldUnits >= 0 ? soldUnits * product.ratio : 0;
-            const lineCA = soldPortions * product.price;
-
-            if (product.category === 'boissons') { totalBoissons += lineCA; } 
-            else { totalNourriture += lineCA; }
-
-            const isLowStock = product.current <= product.alert && product.current > 0;
-            const isOutOfStock = product.current <= 0;
+        function render() {
+            const currentPos = document.getElementById('posID').value;
+            const targetPos = currentPos === 'A' ? 'B' : 'A';
+            const listB = document.getElementById('section-boisson');
+            const listR = document.getElementById('section-restau');
             
-            const card = document.createElement('div');
+            listB.innerHTML = ''; listR.innerHTML = '';
             
-            if (isOutOfStock) { card.className = `product-card out-of-stock`; } 
-            else if (isLowStock) { card.className = `product-card low-stock`; } 
-            else { card.className = `product-card`; }
-            
-            card.innerHTML = `
-                <div class="card-header">
-                    <div class="card-title">${product.name}</div>
-                    <div class="price-badge">${product.price.toFixed(2)} €</div>
-                </div>
-                <div class="card-body">
-                    <div>Initial : <b>${product.initial}</b></div>
-                    <div>Vendus : <b>${soldPortions} port.</b></div>
-                    <div>Ratio : <b>${product.ratio}</b></div>
-                    <div>C.A. : <b>${lineCA.toFixed(2)} €</b></div>
-                    
-                    ${isOutOfStock ? `
-                        <div class="out-of-stock-banner">🚫 PRODUIT ÉPUISÉ</div>
-                    ` : `
-                        <div class="stock-control">
-                            <span>Reste en stock :</span>
-                            <div class="counter-area">
-                                <button class="btn-counter btn-minus" onclick="updateStock('${product.id}', -1)">−</button>
-                                <span class="stock-value">${product.current}</span>
-                                <button class="btn-counter btn-plus" onclick="updateStock('${product.id}', 1)">+</button>
+            inventory.forEach((item, index) => {
+                const sLocal = currentPos === 'A' ? item.qtyA : item.qtyB;
+                const isAlert = sLocal <= (item.alert || 0);
+                const uPoste = (currentPos === 'A' ? item.soldA : item.soldB) * item.ratio;
+
+                if (sLocal > 0 || uPoste > 0) {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = `card p-5 ${isAlert ? 'alert-blink' : ''}`;
+                    itemDiv.innerHTML = `
+                        <button onclick="deleteItem(${index})" class="btn-delete no-print">×</button>
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex-1">
+                               <h3 class="font-black text-slate-900 uppercase text-lg leading-tight mb-1">${item.name}</h3>
+                               <span class="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded-full font-black">Poste ${currentPos} : € ${(uPoste * item.sell).toFixed(2)}</span>
+                            </div>
+                            <div class="text-right">
+                               <span class="block text-3xl font-black text-blue-600 leading-none">${uPoste}</span>
+                               <span class="text-[9px] font-black text-blue-300 uppercase italic">Unités Vendues</span>
                             </div>
                         </div>
-                    `}
-                </div>
-                <div class="card-actions">
-                    <button class="btn-action btn-transfer" onclick="transferProduct('${product.id}', '${product.name}', ${product.initial}, ${product.current})" ${isOutOfStock ? 'style="opacity:0.5; cursor:not-allowed;" disabled' : ''}>⇄ Envoyer</button>
-                    <button class="btn-action btn-delete" onclick="deleteItem('${product.id}', '${product.name}')">🗑️ Supprimer</button>
-                </div>
-            `;
-
-            if (product.category === 'boissons') { listBoissons.appendChild(card); } 
-            else { listNourriture.appendChild(card); }
-        });
-
-        document.getElementById('ca-boissons').innerText = `${totalBoissons.toFixed(2)} €`;
-        document.getElementById('ca-nourriture').innerText = `${totalNourriture.toFixed(2)} €`;
-        document.getElementById('ca-total').innerText = `${(totalBoissons + totalNourriture).toFixed(2)} €`;
-    }
-
-    function toggleForm() { document.getElementById('admin-panel').classList.toggle('active'); }
-
-    function updateStock(id, change) {
-        const product = products.find(p => p.id === id);
-        if (product) {
-            const newValue = product.current + change;
-            if (newValue < 0) return;
-            
-            db.collection("products").doc(id).update({ current: newValue });
-            addHistory(`Modif [${product.name}] : Stock passe de ${product.current} à ${newValue}`, currentPOS);
-        }
-    }
-
-    function transferProduct(productId, productName, currentInitial, currentStock) {
-        const targetPOS = currentPOS === "point_1" ? "point_2" : "point_1";
-        const quantityStr = prompt(`Combien d'unités de [${productName}] envoyer ?`);
-        const quantity = parseInt(quantityStr);
-
-        if (isNaN(quantity) || quantity <= 0 || quantity > currentStock) return;
-
-        db.collection("products").doc(productId).update({ 
-            initial: currentInitial - quantity,
-            current: currentStock - quantity 
-        });
-        
-        addHistory(`TRANSFERT : Envoyé ${quantity} de [${productName}] vers ${targetPOS}`, currentPOS);
-
-        db.collection("products")
-            .where("pos", "==", targetPOS)
-            .where("name", "==", productName)
-            .get()
-            .then((querySnapshot) => {
-                if (!querySnapshot.empty) {
-                    const targetDoc = querySnapshot.docs[0];
-                    db.collection("products").doc(targetDoc.id).update({ 
-                        initial: targetDoc.data().initial + quantity,
-                        current: targetDoc.data().current + quantity
-                    });
-                } else {
-                    const src = products.find(p => p.id === productId);
-                    db.collection("products").add({
-                        name: src.name, 
-                        initial: quantity, 
-                        current: quantity,
-                        alert: src.alert, 
-                        price: src.price, 
-                        ratio: src.ratio,
-                        category: src.category, 
-                        pos: targetPOS
-                    });
-                }
-                addHistory(`TRANSFERT : Reçu ${quantity} de [${productName}] de ${currentPOS}`, targetPOS);
-            });
-    }
-
-    function addItem() {
-        const nameInput = document.getElementById('new-name');
-        const stockInput = document.getElementById('new-stock');
-        const alertInput = document.getElementById('new-alert');
-        const priceInput = document.getElementById('new-price');
-        const ratioInput = document.getElementById('new-ratio');
-        const categoryInput = document.getElementById('new-category');
-
-        if (!nameInput.value || !stockInput.value || !priceInput.value) return;
-
-        const newProduct = {
-            name: nameInput.value,
-            initial: parseInt(stockInput.value),
-            current: parseInt(stockInput.value),
-            alert: parseInt(alertInput.value) || 0,
-            price: parseFloat(priceInput.value),
-            ratio: parseInt(ratioInput.value) || 1,
-            category: categoryInput.value,
-            pos: currentPOS
-        };
-
-        db.collection("products").add(newProduct);
-        addHistory(`Création : ${newProduct.name}`, currentPOS);
-
-        nameInput.value = ''; stockInput.value = ''; alertInput.value = ''; priceInput.value = ''; ratioInput.value = '1';
-        toggleForm();
-    }
-
-    function deleteItem(id, name) {
-        db.collection("products").doc(id).delete();
-        addHistory(`Suppression : ${name}`, currentPOS);
-    }
-
-    // 🚀 OUVRIR LE PANNEAU DE CLÔTURE AVEC STOCK TOTAL VISIBLE
-    function openClotureModal() {
-        const currentPointName = currentPOS === "point_1" ? "Point 1" : "Point 2";
-        document.getElementById('modal-title').innerText = `📊 Bilan de Clôture - ${currentPointName}`;
-        
-        db.collection("products").get().then((querySnapshot) => {
-            let p1Stocks = {};
-            let p2Stocks = {};
-            let allNames = new Set();
-            cachedGlobalProducts = [];
-            
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                cachedGlobalProducts.push({ id: doc.id, ...data });
-                allNames.add(data.name);
-                
-                if (data.pos === "point_1") { p1Stocks[data.name] = data.current; } 
-                else if (data.pos === "point_2") { p2Stocks[data.name] = data.current; }
-            });
-
-            let html = `<div style="color:#7f8c8d; font-size:12px; margin-bottom:10px;">Voici l'état des stocks restants sur les deux stands :</div>`;
-            
-            allNames.forEach(name => {
-                const stockP1 = p1Stocks[name] || 0;
-                const stockP2 = p2Stocks[name] || 0;
-                const totalRestant = stockP1 + stockP2;
-                
-                html += `
-                    <div style="background:#f8f9fa; border-radius:8px; padding:10px; margin-bottom:10px; border:1px solid #eaeaea;">
-                        <div style="font-weight:bold; color:var(--dark); margin-bottom:5px;">${name}</div>
-                        <div style="display:flex; justify-content:space-between; font-size:12px; color:#555;">
-                            <span>P1: <b>${stockP1}</b></span>
-                            <span>P2: <b>${stockP2}</b></span>
-                            <span style="color:var(--success);">TOTAL RESTANT: <b style="font-size:14px;">${totalRestant}</b></span>
+                        <div class="bg-slate-50 p-4 rounded-2xl text-center border mb-4">
+                            <p class="text-[8px] font-black text-slate-400 uppercase">Fûts restants (${currentPos})</p>
+                            <p class="text-3xl font-black ${isAlert ? 'text-red-600' : 'text-slate-800'}">${sLocal}</p>
                         </div>
-                    </div>
-                `;
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="adjustStock(${index})" class="bg-white border text-slate-400 py-4 rounded-2xl font-black text-[9px] uppercase">Inv.</button>
+                            <button onclick="handleTransfer(${index})" class="bg-slate-900 text-white py-4 rounded-2xl font-black text-[8px] uppercase">Vers ${targetPos}</button>
+                            <button onclick="consume(${index})" class="bg-red-500 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-lg">VENDRE 1</button>
+                        </div>
+                    `;
+                    (item.type === 'boisson' ? listB : listR).appendChild(itemDiv);
+                }
             });
+
+            document.getElementById('recetteA').innerText = caisse.A.toFixed(2) + "€";
+            document.getElementById('recetteB').innerText = caisse.B.toFixed(2) + "€";
+            document.getElementById('grandTotal').innerText = (caisse.A + caisse.B).toFixed(2) + "€";
+        }
+
+        function consume(index) {
+            const pos = document.getElementById('posID').value;
+            if ((pos === 'A' ? inventory[index].qtyA : inventory[index].qtyB) > 0) {
+                if (pos === 'A') { inventory[index].qtyA--; inventory[index].soldA++; } 
+                else { inventory[index].qtyB--; inventory[index].soldB++; }
+                caisse[pos] += (inventory[index].ratio * inventory[index].sell);
+                saveData();
+            }
+        }
+
+        function addItem() {
+            const pos = document.getElementById('posID').value;
+            const name = document.getElementById('itemName').value;
+            const qty = parseInt(document.getElementById('itemQty').value) || 0;
+            if(name) {
+                inventory.push({
+                    name, type: document.getElementById('itemType').value,
+                    qtyA: pos === 'A' ? qty : 0, qtyB: pos === 'B' ? qty : 0,
+                    ratio: parseInt(document.getElementById('itemRatio').value) || 1,
+                    sell: parseFloat(document.getElementById('itemSell').value) || 0,
+                    alert: parseInt(document.getElementById('itemAlert').value) || 0,
+                    soldA: 0, soldB: 0
+                });
+                saveData();
+                document.getElementById('itemName').value = '';
+            }
+        }
+
+        function handleTransfer(index) {
+            const pos = document.getElementById('posID').value;
+            const q = prompt(`Quantité à transférer ?`, "1");
+            if (q > 0) {
+                if (pos === 'A' && inventory[index].qtyA >= q) { inventory[index].qtyA -= parseInt(q); inventory[index].qtyB += parseInt(q); }
+                else if (pos === 'B' && inventory[index].qtyB >= q) { inventory[index].qtyB -= parseInt(q); inventory[index].qtyA += parseInt(q); }
+                saveData();
+            }
+        }
+
+        function adjustStock(index) {
+            const pos = document.getElementById('posID').value;
+            const current = pos === 'A' ? inventory[index].qtyA : inventory[index].qtyB;
+            const saisie = prompt(`STOCK PHYSIQUE sur ${pos}`, current);
+            if (saisie !== null) {
+                const nouveau = parseInt(saisie);
+                if (nouveau < current) {
+                    const diff = current - nouveau;
+                    if (confirm(`Facturer ${diff * inventory[index].ratio} unités ?`)) {
+                        caisse[pos] += (diff * inventory[index].ratio * inventory[index].sell);
+                        if (pos === 'A') inventory[index].soldA += diff; else inventory[index].soldB += diff;
+                    }
+                }
+                if (pos === 'A') inventory[index].qtyA = nouveau; else inventory[index].qtyB = nouveau;
+                saveData();
+            }
+        }
+
+        function generateReport() {
+            document.querySelector('.no-print').style.display = 'none';
+            document.getElementById('reportZone').classList.remove('print-only');
+            const details = document.getElementById('printDetails');
+            details.innerHTML = '';
             
-            document.getElementById('modal-body').innerHTML = html;
-            document.getElementById('cloture-modal').classList.add('active');
-        });
-    }
+            ['A', 'B'].forEach(p => {
+                let html = `<div class="mb-6"><h2 class="bg-black text-white p-2 text-sm font-black uppercase">POSTE ${p}</h2><table class="w-full text-xs border-collapse"><thead><tr class="bg-slate-100"><th class="border p-1">Produit</th><th class="border p-1">Fûts</th><th class="border p-1">CA</th></tr></thead><tbody>`;
+                inventory.forEach(item => {
+                    const sold = p === 'A' ? item.soldA : item.soldB;
+                    if(sold > 0) html += `<tr><td class="border p-1 uppercase">${item.name}</td><td class="border p-1 text-center">${sold}</td><td class="border p-1 text-right">${(sold * item.ratio * item.sell).toFixed(2)}€</td></tr>`;
+                });
+                html += `</tbody></table><p class="text-right font-black">Total ${p} : ${caisse[p].toFixed(2)}€</p></div>`;
+                details.innerHTML += html;
+            });
+            document.getElementById('printStats').innerHTML = `<p class="text-center font-black text-xl border-4 border-black p-4 uppercase">Total Général : ${(caisse.A+caisse.B).toFixed(2)}€</p>`;
+        }
 
-    function closeClotureModal() {
-        document.getElementById('cloture-modal').classList.remove('active');
-    }
-
-    // 🚀 CONFIRMER LA CLÔTURE ET SAUVEGARDER DANS L'HISTORIQUE
-    function confirmCloture() {
-        const currentPointName = currentPOS === "point_1" ? "Point 1" : "Point 2";
-        
-        let p1Stocks = {};
-        let p2Stocks = {};
-        let allNames = new Set();
-        
-        cachedGlobalProducts.forEach(p => {
-            allNames.add(p.name);
-            if (p.pos === "point_1") { p1Stocks[p.name] = p.current; } 
-            else if (p.pos === "point_2") { p2Stocks[p.name] = p.current; }
-        });
-        
-        // On construit le texte propre pour l'historique d'impression
-        let historyArchive = `📝 --- BILAN SHIFT VALIDE PAR LE ${currentPointName.toUpperCase()} ---\n`;
-        allNames.forEach(name => {
-            const total = (p1Stocks[name] || 0) + (p2Stocks[name] || 0);
-            historyArchive += `• ${name} : Total Restant = ${total} (P1:${p1Stocks[name] || 0} | P2:${p2Stocks[name] || 0})\n`;
-        });
-        
-        // 1. Sauvegarde dans l'historique
-        addHistory(historyArchive, currentPOS);
-        
-        // 2. Alignement des stocks pour le point de vente actuel
-        products.forEach(p => { 
-            db.collection("products").doc(p.id).update({ initial: p.current }); 
-        });
-        
-        closeClotureModal();
-        alert(`Shift clôturé ! Le bilan avec les stocks totaux a été sauvé dans l'historique.`);
-    }
-
-    function addHistory(text, targetPOS) {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-        db.collection("history").add({ 
-            text: `[${timeStr}] ${text}`, 
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            pos: targetPOS 
-        });
-    }
-
-    function renderHistory() {
-        const listDiv = document.getElementById('history-list');
-        listDiv.innerHTML = history.length === 0 ? '<div class="history-item">Aucune modification.</div>' : history.map(i => `<div class="history-item">${i.text}</div>`).join('');
-    }
-
-    // 🖨️ FONCTION D'IMPRESSION COMPLÈTEMENT ISOLÉE SANS BLOQUER L'ONGLET SOURCE
-    function printHistory() {
-        const historyContent = document.getElementById('history-list').innerHTML;
-        const printWindow = window.open('', '_blank');
-        
-        printWindow.document.write(`
-            <html>
-                <head>
-                    <title>Historique Buvette</title>
-                    <style>
-                        body { font-family: sans-serif; padding: 20px; }
-                        .history-item { padding: 8px 0; border-bottom: 1px solid #ddd; font-size: 13px; white-space: pre-wrap; }
-                    </style>
-                </head>
-                <body onload="window.print(); window.close();">
-                    <h2>📜 Historique du stand</h2>
-                    ${historyContent}
-                </body>
-            </html>
-        `);
-        printWindow.document.close();
-    }
-
-    listenToFirebase();
-</script>
-
+        function deleteItem(i) { if(confirm("Supprimer ?")) { inventory.splice(i, 1); saveData(); } }
+        function switchTab(tab) {
+            ['boisson', 'restau', 'config'].forEach(t => {
+                document.getElementById('section-' + t).classList.toggle('hidden', t !== tab);
+                document.getElementById('tab-' + t).classList.toggle('active-tab', t === tab);
+                document.getElementById('tab-' + t).classList.toggle('text-slate-400', t !== tab);
+            });
+        }
+        function resetAll() { if(confirm("🚨 RESET TOTAL CLOUD ?")) { db.ref('data/').remove(); location.reload(); } }
+    </script>
 </body>
 </html>
