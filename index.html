@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Caisse Cloud V12 - Sécurité Totale</title>
+    <title>Caisse-Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -27,8 +27,8 @@
             <div>
                 <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Poste Actif</p>
                 <select id="posID" onchange="render()" class="bg-transparent text-white text-lg font-black outline-none cursor-pointer">
-                    <option value="A" class="text-black">POSTE ALPHA (A)</option>
-                    <option value="B" class="text-black">POSTE BETA (B)</option>
+                    <option value="A" class="text-black">POSTE A</option>
+                    <option value="B" class="text-black">POSTE B</option>
                 </select>
             </div>
             <div class="text-right">
@@ -50,8 +50,8 @@
 
         <nav class="flex bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
             <button onclick="switchTab('boisson')" id="tab-boisson" class="flex-1 py-4 text-xs uppercase font-black active-tab">🍺 Boissons</button>
-            <button onclick="switchTab('restau')" id="tab-restau" class="flex-1 py-4 text-xs uppercase font-black text-slate-400">🍔 Restau</button>
-            <button onclick="switchTab('config')" id="tab-config" class="flex-1 py-4 text-xs uppercase font-black text-slate-400">⚙️ Admin</button>
+            <button onclick="switchTab('restau')" id="tab-restau" class="flex-1 py-4 text-xs uppercase font-black text-slate-400">🍔 Restauration</button>
+            <button onclick="switchTab('config')" id="tab-config" class="flex-1 py-4 text-xs uppercase font-black text-slate-400">⚙️ Administration</button>
         </nav>
 
         <div id="section-boisson" class="space-y-4"></div>
@@ -250,7 +250,7 @@
         }
 
         function switchTab(t) {
-            ['boisson', 'restau', 'config'].forEach(tab => {
+            ['Boisson', 'Restaurtation', 'config'].forEach(tab => {
                 document.getElementById('section-' + tab).classList.toggle('hidden', tab !== t);
                 document.getElementById('tab-' + tab).classList.toggle('active-tab', tab === t);
             });
