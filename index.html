@@ -51,7 +51,7 @@
         <nav class="flex bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
             <button onclick="switchTab('boisson')" id="tab-boisson" class="flex-1 py-4 text-xs uppercase font-black active-tab">🍺 Boissons</button>
             <button onclick="switchTab('restau')" id="tab-restau" class="flex-1 py-4 text-xs uppercase font-black text-slate-400">🍔 Restauration</button>
-            <button onclick="switchTab('config')" id="tab-config" class="flex-1 py-4 text-xs uppercase font-black text-slate-400">⚙️ Administration</button>
+            <button onclick="switchTab('config')" id="tab-config" class="flex-1 py-4 text-xs uppercase font-black text-slate-400">⚙️ Admin</button>
         </nav>
 
         <div id="section-boisson" class="space-y-4"></div>
@@ -250,7 +250,7 @@
         }
 
         function switchTab(t) {
-            ['Boisson', 'Restaurtation', 'config'].forEach(tab => {
+            ['boisson', 'restau', 'config'].forEach(tab => {
                 document.getElementById('section-' + tab).classList.toggle('hidden', tab !== t);
                 document.getElementById('tab-' + tab).classList.toggle('active-tab', tab === t);
             });
