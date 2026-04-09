@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Caisse Cloud Pro V9 - Final</title>
+    <title>Caisse Cloud Pro V10 - FINAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
@@ -37,11 +37,11 @@
         </header>
 
         <div class="grid grid-cols-2 gap-3 mb-6">
-            <div class="bg-white p-3 rounded-2xl border border-slate-200 text-center">
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 text-center shadow-sm">
                 <span class="text-[8px] font-black text-slate-400 uppercase italic">Recette A</span>
                 <p id="recetteA" class="text-base font-black text-slate-800">0.00€</p>
             </div>
-            <div class="bg-white p-3 rounded-2xl border border-slate-200 text-center">
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 text-center shadow-sm">
                 <span class="text-[8px] font-black text-slate-400 uppercase italic">Recette B</span>
                 <p id="recetteB" class="text-base font-black text-slate-800">0.00€</p>
             </div>
@@ -57,32 +57,27 @@
         <div id="section-restau" class="hidden space-y-4"></div>
 
         <section id="section-config" class="hidden space-y-4">
-            <button onclick="generateReport()" class="w-full bg-blue-600 text-white p-5 rounded-2xl font-black uppercase shadow-lg">📊 Générer le Bilan & Stocks</button>
+            <button onclick="generateReport()" class="w-full bg-blue-600 text-white p-5 rounded-2xl font-black uppercase shadow-lg">📊 Bilan & Stocks Finaux</button>
             <div class="card p-5">
-                <h2 class="text-xs font-black uppercase text-slate-500 mb-4 border-b pb-2">Ajouter un produit</h2>
+                <h2 class="text-xs font-black uppercase text-slate-500 mb-4 border-b pb-2">Nouveau Produit</h2>
                 <div class="grid grid-cols-2 gap-3">
-                    <select id="itemType" class="col-span-2 p-3 rounded-xl bg-slate-100 font-bold text-sm">
-                        <option value="boisson">Type : Boisson</option>
-                        <option value="restau">Type : Restauration</option>
-                    </select>
                     <input type="text" id="itemName" placeholder="Nom du produit" class="col-span-2 p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
                     <input type="number" id="itemQty" placeholder="Fûts Initiaux" class="p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
-                    <input type="number" id="itemAlert" placeholder="Alerte Stock" class="p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
-                    <input type="number" id="itemRatio" placeholder="Verres / fût" class="p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
-                    <input type="number" id="itemSell" placeholder="Prix Verre (€)" class="p-3 rounded-xl bg-slate-100 font-bold text-sm outline-none">
-                    <button onclick="addItem()" class="col-span-2 bg-slate-900 text-white p-4 rounded-xl font-black uppercase text-xs mt-2">Créer le produit</button>
+                    <input type="number" id="itemAlert" placeholder="Alerte Stock" class="p-3 rounded-xl bg-slate-100 font-bold text-sm text-red-500">
+                    <input type="number" id="itemRatio" placeholder="Verres / fût" class="p-3 rounded-xl bg-slate-100 font-bold text-sm">
+                    <input type="number" id="itemSell" placeholder="Prix Verre (€)" class="p-3 rounded-xl bg-slate-100 font-bold text-sm">
+                    <button onclick="addItem()" class="col-span-2 bg-slate-900 text-white p-4 rounded-xl font-black uppercase text-xs">Ajouter au Cloud</button>
                 </div>
             </div>
-            <button onclick="resetAll()" class="w-full text-red-500 text-[10px] font-black uppercase p-4">⚠️ Remise à zéro cloud</button>
+            <button onclick="resetAll()" class="w-full text-red-500 text-[10px] font-black uppercase p-4">⚠️ Reset Total Cloud</button>
         </section>
     </div>
 
     <div id="reportZone" class="print-only p-4 bg-white min-h-screen">
-        <h1 class="text-2xl font-black border-b-4 border-black pb-2 mb-4 text-center italic uppercase">Rapport Final de l'Évènement</h1>
+        <h1 class="text-2xl font-black border-b-4 border-black pb-2 mb-4 text-center italic uppercase">Rapport de Clôture</h1>
         <p id="printDate" class="text-center text-[10px] font-bold mb-6 italic"></p>
         
         <div id="printStats" class="mb-6"></div>
-        
         <div id="printDetails" class="space-y-8"></div>
 
         <section class="mt-10 pt-6 border-t-4 border-double border-black">
@@ -91,8 +86,8 @@
                 <thead class="bg-slate-200">
                     <tr>
                         <th class="p-2 text-left border border-black">Produit</th>
-                        <th class="p-2 border border-black text-center">Vendus (Total)</th>
-                        <th class="p-2 border border-black text-center bg-yellow-100 font-black">Reste en Stock</th>
+                        <th class="p-2 border border-black text-center">Vendus (Total Fûts)</th>
+                        <th class="p-2 border border-black text-center bg-yellow-100 font-black">Reste en Stock (Fûts)</th>
                     </tr>
                 </thead>
                 <tbody id="reportTotalStock"></tbody>
@@ -101,14 +96,14 @@
 
         <div class="no-print mt-10 space-y-3">
             <button onclick="window.print()" class="w-full bg-emerald-600 text-white p-5 rounded-2xl font-black uppercase shadow-xl">🖨️ Imprimer le Rapport</button>
-            <button onclick="location.reload()" class="w-full bg-slate-800 text-white p-4 rounded-2xl font-black uppercase text-xs">⬅️ Retour à la Caisse</button>
+            <button onclick="location.reload()" class="w-full bg-slate-800 text-white p-4 rounded-2xl font-black uppercase text-xs">⬅️ Revenir aux Ventes</button>
         </div>
     </div>
 
     <script>
         // --- CONFIGURATION FIREBASE ---
         const firebaseConfig = {
-             apiKey: "AIzaSyB1YkVkCYeNoDLxyaUgcxhyKMEPzYNteGI",
+            apiKey: "AIzaSyB1YkVkCYeNoDLxyaUgcxhyKMEPzYNteGI",
   authDomain: "bilan-buvette.firebaseapp.com",
   projectId: "bilan-buvette",
   storageBucket: "bilan-buvette.firebasestorage.app",
@@ -126,7 +121,7 @@
             if (data) {
                 inventory = data.inventory || [];
                 caisse = data.caisse || { A: 0, B: 0 };
-                document.getElementById('cloudStatus').innerText = "● CLOUD LIVE";
+                document.getElementById('cloudStatus').innerText = "● CLOUD CONNECTÉ";
                 render();
             }
         });
@@ -153,20 +148,20 @@
                             <h3 class="font-black text-slate-900 uppercase text-lg leading-tight flex-1">${item.name}</h3>
                             <div class="text-right">
                                <span class="block text-3xl font-black text-blue-600 leading-none">${soldU}</span>
-                               <span class="text-[9px] font-black text-blue-300 uppercase">Verres Vendus</span>
+                               <span class="text-[9px] font-black text-blue-300 uppercase italic">Ventes (P${pos})</span>
                             </div>
                         </div>
                         <div class="bg-slate-50 p-4 rounded-2xl text-center border mb-4">
-                            <p class="text-[8px] font-black text-slate-400 uppercase tracking-tighter">Fûts restants sur Poste ${pos}</p>
+                            <p class="text-[8px] font-black text-slate-400 uppercase">Fûts restants sur Poste ${pos}</p>
                             <p class="text-3xl font-black text-slate-800">${sL}</p>
                         </div>
                         <div class="grid grid-cols-3 gap-2">
                             <button onclick="adjustStock(${index})" class="bg-white border text-slate-400 py-4 rounded-2xl font-black text-[9px] uppercase">Inv.</button>
-                            <button onclick="handleTransfer(${index})" class="bg-slate-900 text-white py-4 rounded-2xl font-black text-[8px] uppercase">Envoi ${target}</button>
+                            <button onclick="handleTransfer(${index})" class="bg-slate-900 text-white py-4 rounded-2xl font-black text-[8px] uppercase">Envoyer ${target}</button>
                             <button onclick="consume(${index})" class="bg-red-500 text-white py-4 rounded-2xl font-black text-xs uppercase shadow-lg">VENDRE 1</button>
                         </div>
                     `;
-                    (item.type === 'boisson' ? listB : listR).appendChild(itemDiv);
+                    listB.appendChild(itemDiv); // Ajout simple par défaut
                 }
             });
             document.getElementById('recetteA').innerText = caisse.A.toFixed(2) + "€";
@@ -176,29 +171,36 @@
 
         function consume(i) {
             const pos = document.getElementById('posID').value;
-            if ((pos === 'A' ? inventory[i].qtyA : inventory[i].qtyB) > 0) {
-                if (pos === 'A') { inventory[i].qtyA--; inventory[i].soldA++; } 
-                else { inventory[i].qtyB--; inventory[i].soldB++; }
-                caisse[pos] += (inventory[i].ratio * inventory[i].sell);
+            const item = inventory[i];
+            if ((pos === 'A' ? item.qtyA : item.qtyB) > 0) {
+                if (pos === 'A') { item.qtyA--; item.soldA++; } 
+                else { item.qtyB--; item.soldB++; }
+                caisse[pos] += (item.ratio * item.sell);
                 saveData();
             }
         }
 
+        // --- CORRECTION MAJEURE : LOGIQUE DE VENTE VIA INVENTAIRE ---
         function adjustStock(i) {
             const pos = document.getElementById('posID').value;
             const item = inventory[i];
             const current = pos === 'A' ? item.qtyA : item.qtyB;
-            const n = prompt(`INVENTAIRE PHYSIQUE POSTE ${pos}\nCombien de fûts de "${item.name}" reste-t-il ?`, current);
             
-            if (n !== null && !isNaN(parseInt(n))) {
+            const n = prompt(`INVENTAIRE POSTE ${pos}\nArticle: ${item.name}\nStock actuel : ${current} fûts.\n\nNouveau nombre de fûts ?`, current);
+            
+            if (n !== null && n !== "" && !isNaN(parseInt(n))) {
                 const nouveau = parseInt(n);
+                
                 if (nouveau < current) {
                     const diff = current - nouveau;
-                    if (confirm(`Vendre ${diff} fût(s) manquant(s) et encaisser ${(diff * item.ratio * item.sell).toFixed(2)}€ ?`)) {
-                        caisse[pos] += (diff * item.ratio * item.sell);
+                    const montantCaisse = diff * item.ratio * item.sell;
+                    
+                    if (confirm(`Écart de ${diff} fût(s) détecté.\nAjouter ${montantCaisse.toFixed(2)}€ à la caisse du Poste ${pos} ?`)) {
+                        caisse[pos] += montantCaisse;
                         if (pos === 'A') item.soldA += diff; else item.soldB += diff;
                     }
                 }
+                
                 if (pos === 'A') item.qtyA = nouveau; else item.qtyB = nouveau;
                 saveData();
             }
@@ -211,7 +213,6 @@
             if (q > 0) {
                 if (pos === 'A' && inventory[i].qtyA >= q) { inventory[i].qtyA -= parseInt(q); inventory[i].qtyB += parseInt(q); }
                 else if (pos === 'B' && inventory[i].qtyB >= q) { inventory[i].qtyB -= parseInt(q); inventory[i].qtyA += parseInt(q); }
-                else { alert("Stock insuffisant !"); }
                 saveData();
             }
         }
@@ -219,45 +220,38 @@
         function generateReport() {
             document.querySelector('.no-print').style.display = 'none';
             document.getElementById('reportZone').classList.remove('print-only');
-            document.getElementById('printDate').innerText = "Date : " + new Date().toLocaleString();
+            document.getElementById('printDate').innerText = "Imprimé le " + new Date().toLocaleString();
             
             const details = document.getElementById('printDetails');
             const totalStockBody = document.getElementById('reportTotalStock');
             details.innerHTML = ''; totalStockBody.innerHTML = '';
             
             ['A', 'B'].forEach(p => {
-                let html = `<div class="mb-4"><h2 class="bg-black text-white p-2 text-sm font-black uppercase italic">POSTE ${p}</h2><table class="w-full text-xs border-collapse"><thead><tr class="bg-slate-100 border-b border-black"><th class="p-2 text-left">Article</th><th class="p-2">Fûts Vendus</th><th class="p-2">CA</th><th class="p-2">Stock Poste</th></tr></thead><tbody>`;
+                let html = `<div class="mb-4"><h2 class="bg-slate-900 text-white p-2 text-sm font-black uppercase italic">DÉTAIL POSTE ${p}</h2><table class="w-full text-xs border-collapse"><thead><tr class="bg-slate-100 border-b border-black"><th class="p-2 text-left">Produit</th><th class="p-2">Fûts Vendus</th><th class="p-2 text-right">Recette</th></tr></thead><tbody>`;
                 inventory.forEach(item => {
                     const s = p === 'A' ? item.soldA : item.soldB;
-                    const q = p === 'A' ? item.qtyA : item.qtyB;
-                    if(s > 0 || q > 0) html += `<tr class="border-b">
-                        <td class="p-2 uppercase font-bold">${item.name}</td>
-                        <td class="p-2 text-center font-black text-blue-600">${s}</td>
-                        <td class="p-2 text-right">${(s * item.ratio * item.sell).toFixed(2)}€</td>
-                        <td class="p-2 text-center italic text-slate-500">${q}</td>
-                    </tr>`;
+                    if(s > 0) html += `<tr class="border-b"><td class="p-2 uppercase font-bold">${item.name}</td><td class="p-2 text-center font-black">${s}</td><td class="p-2 text-right">${(s * item.ratio * item.sell).toFixed(2)}€</td></tr>`;
                 });
-                html += `</tbody></table><div class="text-right font-black p-2 italic">RECETTE POSTE ${p} : ${caisse[p].toFixed(2)}€</div></div>`;
+                html += `</tbody></table><div class="text-right font-black p-2 italic bg-slate-50">SOUS-TOTAL POSTE ${p} : ${caisse[p].toFixed(2)}€</div></div>`;
                 details.innerHTML += html;
             });
 
             inventory.forEach(item => {
                 const totalV = (item.soldA || 0) + (item.soldB || 0);
                 const totalR = (item.qtyA || 0) + (item.qtyB || 0);
-                totalStockBody.innerHTML += `<tr class="border-b border-black"><td class="p-2 font-black uppercase">${item.name}</td><td class="p-2 text-center font-bold">${totalV} fûts</td><td class="p-2 text-center font-black bg-yellow-50 text-lg">${totalR} fûts</td></tr>`;
+                totalStockBody.innerHTML += `<tr class="border-b border-black"><td class="p-2 font-black uppercase">${item.name}</td><td class="p-2 text-center font-bold text-blue-600">${totalV}</td><td class="p-2 text-center font-black bg-yellow-50 text-lg">${totalR} fûts</td></tr>`;
             });
 
-            document.getElementById('printStats').innerHTML = `<div class="bg-black text-white p-4 rounded-xl text-center"><p class="text-3xl font-black text-emerald-400">${(caisse.A+caisse.B).toFixed(2)}€</p><p class="text-[10px] uppercase font-black tracking-widest">Recette Globale Évènement</p></div>`;
+            document.getElementById('printStats').innerHTML = `<div class="bg-black text-white p-4 rounded-xl text-center shadow-lg"><p class="text-[10px] uppercase font-bold tracking-widest text-slate-400">Recette Totale de l'Évènement</p><p class="text-4xl font-black text-emerald-400">${(caisse.A+caisse.B).toFixed(2)}€</p></div>`;
         }
 
         function addItem() {
-            const pos = document.getElementById('posID').value;
+            const p = document.getElementById('posID').value;
             const name = document.getElementById('itemName').value;
-            const qty = parseInt(document.getElementById('itemQty').value) || 0;
             if(name) {
                 inventory.push({
-                    name, type: document.getElementById('itemType').value,
-                    qtyA: pos === 'A' ? qty : 0, qtyB: pos === 'B' ? qty : 0,
+                    name, qtyA: p === 'A' ? parseInt(document.getElementById('itemQty').value) : 0,
+                    qtyB: p === 'B' ? parseInt(document.getElementById('itemQty').value) : 0,
                     ratio: parseInt(document.getElementById('itemRatio').value) || 1,
                     sell: parseFloat(document.getElementById('itemSell').value) || 0,
                     alert: parseInt(document.getElementById('itemAlert').value) || 0,
@@ -273,11 +267,10 @@
             ['boisson', 'restau', 'config'].forEach(tab => {
                 document.getElementById('section-' + tab).classList.toggle('hidden', tab !== t);
                 document.getElementById('tab-' + tab).classList.toggle('active-tab', tab === t);
-                document.getElementById('tab-' + tab).classList.toggle('text-slate-400', tab !== t);
             });
         }
         function deleteItem(i) { if(confirm("Supprimer l'article ?")) { inventory.splice(i, 1); saveData(); } }
-        function resetAll() { if(confirm("🚨 RESET TOTAL CLOUD ?")) { db.ref('data/').remove(); location.reload(); } }
+        function resetAll() { if(confirm("🚨 EFFACER TOUTES LES DONNÉES CLOUD ?")) { db.ref('data/').remove(); location.reload(); } }
     </script>
 </body>
 </html>
