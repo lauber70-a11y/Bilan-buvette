@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Buvette - Bilan Semaine</title>
+    <title>Buvette - Bilan Total</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -132,7 +132,7 @@
         
         #loading { text-align: center; font-size: 16px; color: #7f8c8d; padding: 30px; }
 
-        /* 🖼️ MODAL DE BILAN MAISON */
+        /* 🖼️ MODAL DE BILAN MAISON (POUR EVITER LES POPUPS NAVIGATEUR BLOQUÉES) */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
@@ -145,6 +145,8 @@
         }
         .modal-card h2 { margin-top: 0; font-size: 18px; color: var(--dark); border-bottom: 2px solid #eee; padding-bottom: 10px; }
         .modal-body { max-height: 300px; overflow-y: auto; font-size: 14px; margin: 15px 0; }
+        .modal-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f1f1f1; }
+        .modal-row.total-row { font-weight: bold; color: var(--success); background: #f9f9f9; border-top: 1px solid #ddd; }
         .modal-actions { display: flex; gap: 10px; }
         .btn-modal { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
         .btn-cancel { background: #e0e0e0; color: #333; }
@@ -155,7 +157,7 @@
 
 <div class="container">
     <header>
-        <h1>Bilan Buvette Montbo'Zic 2026</h1>
+        <h1>Bilan Buvette</h1>
         <div class="pos-selector">
             <label>📍 Point de vente actuel :</label>
             <select id="pos-choice" onchange="changePOS(this.value)">
@@ -216,7 +218,8 @@
 <div class="modal-overlay" id="cloture-modal">
     <div class="modal-card">
         <h2 id="modal-title">📊 Bilan de Clôture</h2>
-        <div class="modal-body" id="modal-body"></div>
+        <div class="modal-body" id="modal-body">
+            </div>
         <div class="modal-actions">
             <button class="btn-modal btn-cancel" onclick="closeClotureModal()">Annuler</button>
             <button class="btn-modal btn-confirm" onclick="confirmCloture()">Valider la clôture</button>
@@ -229,12 +232,12 @@
     // ⚠️ REMPLACEZ CE BLOC PAR VOS COORDONNÉES FIREBASE
     // -------------------------------------------------------------------------
     const firebaseConfig = {
-         apiKey: "AIzaSyB1YkVkCYeNoDLxyaUgcxhyKMEPzYNteGI",
-         authDomain: "bilan-buvette.firebaseapp.com",
-         projectId: "bilan-buvette",
-         storageBucket: "bilan-buvette.firebasestorage.app",
-         messagingSenderId: "89721562835",
-         appId: "1:89721562835:web:9d6256a024ab90a33bd626"
+        apiKey: "VOTRE_CLE_API",
+        authDomain: "votre-projet.firebaseapp.com",
+        projectId: "votre-projet",
+        storageBucket: "votre-projet.appspot.com",
+        messagingSenderId: "123456789",
+        appId: "1:123456789:web:abcdef12345"
     };
     // -------------------------------------------------------------------------
 
@@ -246,7 +249,7 @@
     let history = [];
     let unsubscribeProducts = null;
     let unsubscribeHistory = null;
-    let cachedGlobalProducts = []; 
+    let cachedGlobalProducts = []; // Pour stocker les données du point d'à côté
 
     function changePOS(newPOS) {
         currentPOS = newPOS;
@@ -430,6 +433,7 @@
         addHistory(`Suppression : ${name}`, currentPOS);
     }
 
+    // 🚀 OUVRIR LE PANNEAU DE CLÔTURE AVEC STOCK TOTAL VISIBLE
     function openClotureModal() {
         const currentPointName = currentPOS === "point_1" ? "Point 1" : "Point 2";
         document.getElementById('modal-title').innerText = `📊 Bilan de Clôture - ${currentPointName}`;
@@ -477,9 +481,13 @@
         document.getElementById('cloture-modal').classList.remove('active');
     }
 
+    // 🚀 CONFIRMER LA CLÔTURE ET SAUVEGARDER DANS L'HISTORIQUE
     function confirmCloture() {
         const currentPointName = currentPOS === "point_1" ? "Point 1" : "Point 2";
-        let p1Stocks = {}; let p2Stocks = {}; let allNames = new Set();
+        
+        let p1Stocks = {};
+        let p2Stocks = {};
+        let allNames = new Set();
         
         cachedGlobalProducts.forEach(p => {
             allNames.add(p.name);
@@ -487,14 +495,17 @@
             else if (p.pos === "point_2") { p2Stocks[p.name] = p.current; }
         });
         
+        // On construit le texte propre pour l'historique d'impression
         let historyArchive = `📝 --- BILAN SHIFT VALIDE PAR LE ${currentPointName.toUpperCase()} ---\n`;
         allNames.forEach(name => {
             const total = (p1Stocks[name] || 0) + (p2Stocks[name] || 0);
             historyArchive += `• ${name} : Total Restant = ${total} (P1:${p1Stocks[name] || 0} | P2:${p2Stocks[name] || 0})\n`;
         });
         
+        // 1. Sauvegarde dans l'historique
         addHistory(historyArchive, currentPOS);
         
+        // 2. Alignement des stocks pour le point de vente actuel
         products.forEach(p => { 
             db.collection("products").doc(p.id).update({ initial: p.current }); 
         });
@@ -518,91 +529,27 @@
         listDiv.innerHTML = history.length === 0 ? '<div class="history-item">Aucune modification.</div>' : history.map(i => `<div class="history-item">${i.text}</div>`).join('');
     }
 
-    // 🖨️ FONCTION D'IMPRESSION COMPLÈTEMENT REVUE (AVEC CALCULS FINANCIERS)
+    // 🖨️ FONCTION D'IMPRESSION COMPLÈTEMENT ISOLÉE SANS BLOQUER L'ONGLET SOURCE
     function printHistory() {
         const historyContent = document.getElementById('history-list').innerHTML;
-
-        // Étape 1 : On va chercher TOUT l'inventaire actuel en base de données pour calculer les CA globaux
-        db.collection("products").get().then((querySnapshot) => {
-            let caPoint1 = 0;
-            let caPoint2 = 0;
-
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                const soldUnits = data.initial - data.current;
-                const soldPortions = soldUnits >= 0 ? soldUnits * data.ratio : 0;
-                const caGeneré = soldPortions * data.price;
-
-                if (data.pos === "point_1") { caPoint1 += caGeneré; }
-                else if (data.pos === "point_2") { caPoint2 += caGeneré; }
-            });
-
-            const caTotalCumule = caPoint1 + caPoint2;
-
-            // Étape 2 : On ouvre la fenêtre d'impression avec ces nouveaux chiffres
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>Historique & Bilan Semaine</title>
-                        <style>
-                            body { font-family: sans-serif; padding: 20px; color: #2c3e50; }
-                            h2 { border-bottom: 2px solid #34495e; padding-bottom: 10px; }
-                            .history-item { padding: 8px 0; border-bottom: 1px solid #ddd; font-size: 13px; white-space: pre-wrap; }
-                            
-                            /* Style pour le bloc financier */
-                            .bilan-box {
-                                background: #f8f9fa;
-                                border: 2px solid #2ecc71;
-                                border-radius: 8px;
-                                padding: 15px;
-                                margin-bottom: 25px;
-                            }
-                            .bilan-row {
-                                display: flex;
-                                justify-content: space-between;
-                                padding: 8px 0;
-                                border-bottom: 1px solid #eee;
-                                font-size: 15px;
-                            }
-                            .bilan-row.cumule {
-                                font-size: 18px;
-                                font-weight: bold;
-                                border-bottom: none;
-                                color: #2ecc71;
-                                margin-top: 5px;
-                            }
-                        </style>
-                    </head>
-                    <body onload="window.print(); window.close();">
-                        
-                        <h2>💰 BILAN FINANCIER GLOBAL (Semaine)</h2>
-                        <div class="bilan-box">
-                            <div class="bilan-row">
-                                <span>Total gagné - Point 1 :</span>
-                                <b>${caPoint1.toFixed(2)} €</b>
-                            </div>
-                            <div class="bilan-row">
-                                <span>Total gagné - Point 2 :</span>
-                                <b>${caPoint2.toFixed(2)} €</b>
-                            </div>
-                            <div class="bilan-row cumule">
-                                <span>CUMUL DES 2 POINTS :</span>
-                                <span>${caTotalCumule.toFixed(2)} €</span>
-                            </div>
-                        </div>
-
-                        <h2>📜 HISTORIQUE DU STAND</h2>
-                        ${historyContent}
-                        
-                    </body>
-                </html>
-            `);
-            printWindow.document.close();
-        }).catch((error) => {
-            console.error("Erreur lors du calcul financier :", error);
-            alert("Impossible de calculer le bilan global pour l'impression.");
-        });
+        const printWindow = window.open('', '_blank');
+        
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Historique Buvette</title>
+                    <style>
+                        body { font-family: sans-serif; padding: 20px; }
+                        .history-item { padding: 8px 0; border-bottom: 1px solid #ddd; font-size: 13px; white-space: pre-wrap; }
+                    </style>
+                </head>
+                <body onload="window.print(); window.close();">
+                    <h2>📜 Historique du stand</h2>
+                    ${historyContent}
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
     }
 
     listenToFirebase();
